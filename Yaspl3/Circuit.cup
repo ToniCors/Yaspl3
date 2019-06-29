@@ -1,0 +1,235 @@
+package parser;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+
+
+import astNodes.*;
+
+
+parser code {: 
+ 
+  @Override
+  public void syntax_error(java_cup.runtime.Symbol s){
+		super.syntax_error(s);
+      System.out.println("compiler has detected a syntax error at line " + (s.left +1)
+          + " column " + (s.right+1)+ " by token: "+s.value+" symID: "+s.sym);
+
+  	try {
+  		System.out.println("carattere successivo : "+super.scan().value);
+  	} catch (Exception e) {
+  		// TODO Auto-generated catch block
+  		e.printStackTrace();
+  	}
+   
+  }
+
+
+:}
+
+ /* Terminals*/ 
+terminal HEAD,START,DEF,IN,OUT,INOUT,TRUE,FALSE,READ,WRITE;	
+terminal SEMI,COMMA,LPAR,RPAR,LGPAR,RGPAR;	
+terminal IF,THEN,WHILE,DO,ELSE;	
+terminal INT,BOOL,DOUBLE,STRING,CHAR;
+terminal PLUS,MINUS,TIMES,DIV,ASSIGN,UMINUS;
+terminal GT,GE,LT,LE,EQ,NOT,AND,OR; 
+terminal String INT_CONST,DOUBLE_CONST,STRING_CONST,CHAR_CONST;
+terminal String ID;
+
+ /* Non-terminals */
+ non terminal ProgramOP programma;
+ non terminal ArrayList<Decls> decls;
+ non terminal VarDecelOP var_decl;
+ non terminal ArrayList<VarInitOP> var_decls_init;
+ non terminal String type;
+ non terminal Expr var_init_value;
+ non terminal ArrayList<Identifier> vars; 
+ non terminal ProcDecelOP def_decl;
+ non terminal ArrayList<VarDecelOP> var_decls;
+ non terminal ArrayList<ParOP> par_decls; 
+ non terminal String par_type;
+ non terminal BodyOP body;
+ non terminal ArrayList<Statment> statements;
+ non terminal Statment stat;
+ non terminal ArrayList<Expr> args;
+ non terminal CompStatOP comp_stat; 
+ non terminal Expr expr;
+
+ 
+/* Precedences */
+precedence right COMMA;
+precedence left OR;
+precedence left AND;
+precedence right NOT;
+precedence left GT, GE, LT, LE, EQ;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIV;
+precedence left UMINUS;
+precedence nonassoc RPAR;
+
+
+
+
+
+
+/* The grammar */
+
+//--------------------------------programma------------------------
+
+programma ::= HEAD decls:ds START statements:st {: RESULT= new ProgramOP(ds,st);  :};
+
+//--------------------------------decls------------------------
+
+decls ::= var_decl:vd decls:decs {:decs.add(0,vd); RESULT = decs;  :}				
+		|def_decl:dd decls:decs {:decs.add(0,dd); RESULT = decs; :}				
+		|/* EPSILON */ {: RESULT =new ArrayList<Decls>(); :}
+		;
+
+//-------------------------------statements------------------------
+		
+statements ::= stat:s statements:ss {: ss.add(0,s); RESULT = ss ;  :}
+		|/* EPSILON */		 {: RESULT =new ArrayList<Statment>();  :}
+		;
+
+//--------------------------------var_decl -----------------------
+		
+var_decl ::= type:ty var_decls_init:vadi SEMI {: RESULT = new VarDecelOP(ty,vadi) ; :};
+
+//--------------------------------type------------------------
+
+
+
+type ::= INT{: RESULT =TypeChecker.INT; :}
+				
+		|BOOL {: RESULT =TypeChecker.BOOLE; :}
+		
+		|DOUBLE {:RESULT =TypeChecker.DOUBLE;  :}
+		
+		|STRING {:RESULT =TypeChecker.STRING;  :}
+		
+		|CHAR {: RESULT =TypeChecker.CHAR; :}
+		
+		;
+
+//--------------------------------var_decls_init------------------------
+
+var_decls_init ::= ID:id var_init_value:viv COMMA var_decls_init:vdi {: vdi.add(0,new  VarInitOP (new Identifier(id), viv)); RESULT =vdi; :}
+			|ID:id var_init_value:viv {:RESULT = new ArrayList<VarInitOP>() {{ add(new VarInitOP(new Identifier(id), viv));}}; :}
+		;
+
+//--------------------------------var_init_value------------------------
+
+var_init_value ::= ASSIGN expr:e1 {: RESULT =e1; :}
+		|/* EPSILON */		 {:RESULT =null;  :}		
+		;
+
+//--------------------------------vars------------------------
+		
+vars ::= ID:id COMMA vars:vs{:vs.add(0,new Identifier(id));RESULT =vs; :}
+		| ID:id {: RESULT = new ArrayList<Identifier>() {{ add(new Identifier(id));}}; :}
+		;
+
+//--------------------------------def_decl------------------------
+		
+def_decl ::= DEF ID:id LPAR par_decls:pds RPAR body:b {:RESULT =new ProcDecelOP(new Identifier(id), pds, b);  :}
+		|DEF ID:id LPAR RPAR body:b	{:RESULT =new ProcDecelOP(new Identifier(id), new ArrayList<ParOP>(), b);  :}
+		;
+
+//--------------------------------var_decls------------------------
+		
+var_decls ::= var_decl:vd var_decls:vds	{:vds.add(0,vd); RESULT = vds; :}
+		|/* EPSILON */		{: RESULT =new ArrayList<VarDecelOP>(); :}	
+		;	
+
+//--------------------------------par_decls------------------------
+		 
+par_decls ::= par_type:pt type:t ID:id COMMA par_decls:pds{: pds.add(0, new ParOP(pt,t,new Identifier(id))); RESULT =pds;  :}
+		| par_type:pt type:t ID:id{:  RESULT = new ArrayList<ParOP>() {{ add(new ParOP(pt,t,new Identifier(id)));}};:}
+		;
+
+//--------------------------------par_type------------------------
+		
+par_type ::= IN  {: RESULT =TypeChecker.IN;  :}
+			| OUT  {: RESULT =TypeChecker.OUT;  :}
+			|INOUT {: RESULT =TypeChecker.INOUT;  :}
+		;
+
+//--------------------------------body------------------------
+
+body ::= LGPAR var_decls:vd statements:s RGPAR{: RESULT =new BodyOP(vd,s); :}
+		;
+
+//--------------------------------stat------------------------ *******
+
+stat ::= vars:v READ SEMI {: RESULT = new ReadOP(v); :}
+		| args:a WRITE SEMI {: RESULT = new WriteOP(a); :}
+		| ID:id ASSIGN expr:e SEMI {: RESULT = new AssignOP(new Identifier(id),e);  :}
+		| ID:id LPAR args:a RPAR SEMI {: RESULT =  new CallOP(new Identifier(id), a);  :}
+		| ID:id LPAR RPAR SEMI{: RESULT = new CallOP(new Identifier(id), new ArrayList<Expr>());  :}
+		| IF LPAR expr:e RPAR THEN comp_stat:cs1 ELSE comp_stat:cs2 {: RESULT = new IfThenElseOp(e, cs1, cs2);  :}
+		| IF LPAR expr:e RPAR THEN comp_stat:cs1 {: RESULT =new IfThenOp(e, cs1);  :}
+		| WHILE LPAR expr:e RPAR DO comp_stat:cs1 {: RESULT =new  WhileOP(e, cs1); :}
+		;
+//--------------------------------args------------------------
+	
+args ::= expr:e COMMA args:a {: a.add(0,e);  RESULT =a;  :}
+		|ID:id COMMA args:a {: a.add(0,new Identifier(id));  RESULT =a;  :}
+		| expr:e {: RESULT = new ArrayList<Expr>() {{ add(e);}};  :}
+		;
+
+//--------------------------------comp_stat------------------------
+
+comp_stat ::= LGPAR statements:s RGPAR {:RESULT= new CompStatOP(s); :}
+			
+		;
+
+//--------------------------------expr------------------------
+
+expr ::= 
+
+		| expr:e1 GT expr:e2 {: RESULT = new GtOP(e1,e2); :}
+		
+		| expr:e1 GE expr:e2 {: RESULT = new GeOP(e1,e2); :}
+		
+		| expr:e1 LT expr:e2 {: RESULT = new LtOP(e1,e2); :}
+		
+		| expr:e1 LE expr:e2 {: RESULT = new LeOP(e1,e2); :}
+		
+		| expr:e1 EQ expr:e2 {: RESULT = new EqOP(e1,e2); :}
+		
+  		| expr:e1 PLUS expr:e2 {: RESULT = new AddOP(e1,e2); :}
+  		
+  		| expr:e1 MINUS expr:e2 {: RESULT = new DiffOP(e1,e2); :}
+  		
+  		| expr:e1 DIV expr:e2 {: RESULT = new DivOP(e1,e2);  :}
+  		
+  		| expr:e1 TIMES expr:e2 {:RESULT = new MulOP(e1,e2);  :}
+  		
+  		| expr:e1 OR expr:e2 {:RESULT = new OrOP(e1,e2); :}
+
+		| expr:e1 AND expr:e2 {: RESULT = new AndOP(e1,e2); :}
+						
+		| MINUS expr:e  {: RESULT = new UminusOP(e);  :}%prec UMINUS
+		
+		| NOT expr:e  {: RESULT = new NotOP(e);  :}
+		
+		|LPAR expr:e RPAR {: RESULT = e;  :}
+		
+		|TRUE {: RESULT =new BooleanConst(true);    :}
+				
+		|FALSE {: RESULT = new BooleanConst(false);  :}
+				
+		|ID:id {: RESULT =new Identifier(id);  :}
+				
+		|INT_CONST:intConst {:RESULT =new IntConst(Integer.parseInt(intConst));  :}
+				 
+		|DOUBLE_CONST:doubleConst  {: RESULT = new DoubleConst(Double.parseDouble(doubleConst));  :}
+				
+		|CHAR_CONST:cConst {: RESULT = new CharConst(cConst);  :}
+				
+		|STRING_CONST:stringConst {: RESULT = new StringConst(stringConst); :}
+				 
+		;

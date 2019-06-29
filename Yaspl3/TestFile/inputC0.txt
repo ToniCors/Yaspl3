@@ -1,0 +1,54 @@
+//correct scoping exemple
+
+head 
+
+int a = 10;
+double b = 10.5;
+char c = 'c';
+string s = "str";
+bool h= true;
+
+string str;
+
+
+def funct(in int s, in double c, out char b, inout string a){
+
+	int aa = 100;
+	string ss = aa+a;
+	s = h;
+	
+}
+
+def funct1(){
+
+	int a = 100;
+	string s = s+a;
+	
+	
+}
+
+start
+
+str = s+s;
+
+if(str < s)then{
+" cancatenezaione eseguita con successo", str->;
+}
+
+str = s+c;
+
+if(str < s)then{
+" cancatenezaione eseguita con successo", str->;
+}
+
+str = s+b;
+
+if(str < s)then{
+" cancatenezaione eseguita con successo", str->;
+}
+
+str = s+a;
+
+if(str < s)then{
+" cancatenezaione eseguita con successo", str->;
+}

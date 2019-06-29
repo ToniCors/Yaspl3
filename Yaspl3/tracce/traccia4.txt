@@ -1,0 +1,16 @@
+ESERCITAZIONE 4 - YASPL.3 analisi lessicale e sintattica (versione finale)
+Return to: Prof. Gennaro C...
+Ora disponibile online (grazie al Dott. De Rosa)  il syntax editor di YASPL.3
+
+
+
+Date le seguenti specifiche lessicali e sintattiche del linguaggio YASPL.3, 
+
+scrivere un programma YASPL.3 (si veda questo esempio di codice) che 
+visualizzi un menu in cui un utente può scegliere l' operazione aritmetica da svolgere
+richieda all'utente gli input (interi o double) necessari per svolgere l'operazione scelta
+esegua l'operazione, restituisca il risultato e chieda se si vuol continuare
+all'input 0 oppure 1 il programma  conclude oppure mostra il menu iniziale, rispettivamente.
+N.B. si utilizzino almeno due funzioni. In generale, si cerchi di utilizzare tutte le  (poche) caratteristiche del linguaggio.
+allo scopo di poter verificare la correttezza e compilare il programma appena scritto, si inizi con il costruire un parser completo di lexer e parser per YASPL.3 tramite Jflex e CUP. Nota che il plugin su Eclipse per jflex presentato nella lezione del 19 Ottobre contiene anche CUP. Si usi questo progetto Eclipse (nuova versione) come esempio di uso di jflex e cup insieme.
+Utilizzare la grammatica implementata al punto 3. per costruire gli alberi sintattici secondo questa specifica (questo è un esempio di applicazione). Per verificare la correttezza del proprio software si utilizzi il pattern visitor per stampare l'albero sintattico in formato XML (per visualizzare l' XML si può usare Firefox o http://codebeautify.org/xmlviewer o altro ancora)

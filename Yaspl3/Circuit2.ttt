@@ -1,0 +1,36 @@
+// Circuit.lex
+//
+// Description of lexer for circuit description language.
+//
+// Ian Stark  <<EOF>>
+
+import java_cup.runtime.Symbol; 		//This is how we pass tokens to the parser
+
+%%
+%eofval{
+ System.out.println("EOF \n"); return new Symbol(CircuitSym.EOF);
+%eofval}
+										// Declarations for JFlex
+%unicode 								// We wish to read text files
+%cupsym CircuitSym
+%cup 									// Declare that we expect to use Java CUP
+
+										// Abbreviations for regular expressions
+whitespace = [ \r\t\f]
+digit = [0-9]
+number = {digit}+
+value1 = {number}("."{number})?
+
+
+%%
+
+										// Now for the actual tokens and assocated actions
+"seq" 		{ System.out.println("seq --> sending SEQ"); return new Symbol(CircuitSym.SEQ); }
+"par" 		{ System.out.println("par --> sending PAR");return new Symbol(CircuitSym.PAR); }
+"end" 		{ System.out.println("end --> sending END");return new Symbol(CircuitSym.END); }
+{value1} 	{ System.out.println(yytext() + " --> sending RESISTOR");return new Symbol(CircuitSym.RESISTOR,yytext()); }
+{whitespace} { System.out.println("whitespace " + yytext() +" --> ignore!");/* ignore */ }
+
+ [n]  {System.out.println("\\n \n"); return new Symbol(CircuitSym.EOF);}
+
+.  {System.out.println("ERROR " + yytext() +" --> ignore!"); /* ignore */}
